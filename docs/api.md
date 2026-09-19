@@ -12,7 +12,7 @@ L'API décrit **ce qui doit être échangé**, sans imposer la manière dont le 
 
 ---
 
-## 2. Configuration et état de la partie
+# 2. Configuration et état de la partie
 
 Il faut distinguer deux types d'informations.
 
@@ -21,9 +21,18 @@ Il faut distinguer deux types d'informations.
 Ces informations sont définies au lancement de la partie et ne changent pas pendant celle-ci :
 
 * difficulté ;
-* carte.
+* identifiant de la carte.
 
-Elles sont utilisées lors de la création de l'instance `Game`.
+Les définitions des cartes sont centralisées dans `maps.py`.
+
+`maps.py` contient notamment :
+
+* les dimensions communes des cartes ;
+* les obstacles ;
+* le comportement des bordures ;
+* les informations propres à chaque carte.
+
+La configuration sélectionnée est utilisée lors de la création de l'instance `Game`.
 
 Exemple conceptuel :
 
@@ -68,11 +77,62 @@ Dans cet exemple :
 [3, 5] → queue
 ```
 
-La longueur du serpent peut être obtenue à partir du nombre de positions dans `snake`. Il n'est donc pas nécessaire de stocker une variable `length` séparément.
+La longueur du serpent peut être obtenue à partir du nombre de positions dans `snake`.
+
+Il n'est donc pas nécessaire de stocker une variable `length` séparément.
 
 ---
 
-# 3. Création d'une partie
+# 3. Liste des cartes
+
+### `GET /maps`
+
+Retourne les informations nécessaires au frontend pour afficher les cartes disponibles et leurs aperçus.
+
+Les données sont basées sur les définitions présentes dans `maps.py`.
+
+### Réponse
+
+Exemple conceptuel :
+
+```json
+{
+    "maps": [
+        {
+            "id": 1,
+            "name": "Classique",
+            "width": 20,
+            "height": 15,
+            "obstacles": [],
+            "wrap": true
+        },
+        {
+            "id": 2,
+            "name": "Murs",
+            "width": 20,
+            "height": 15,
+            "obstacles": [
+                [5, 7],
+                [6, 7],
+                [7, 7]
+            ],
+            "wrap": false
+        }
+    ]
+}
+```
+
+Les quatre cartes utilisent les mêmes dimensions.
+
+Les positions des obstacles permettent au frontend de construire l'aperçu de chaque carte.
+
+Le frontend ne doit pas avoir besoin de reproduire manuellement les définitions des cartes.
+
+Cette route peut également être utilisée pour récupérer les informations nécessaires à l'affichage du menu de sélection des cartes.
+
+---
+
+# 4. Création d'une partie
 
 ### `POST /game/start`
 
@@ -83,16 +143,16 @@ Crée une nouvelle partie avec la difficulté et la carte sélectionnées.
 ```json
 {
     "difficulty": 2,
-    "map": 3
+    "map_id": 3
 }
 ```
 
 ### Paramètres
 
-| Paramètre    | Type   | Description                       |
-| ------------ | ------ | --------------------------------- |
-| `difficulty` | entier | Niveau de difficulté entre 1 et 4 |
-| `map`        | entier | Numéro de la carte entre 1 et 4   |
+| Paramètre    | Type   | Description                          |
+| ------------ | ------ | ------------------------------------ |
+| `difficulty` | entier | Niveau de difficulté entre 1 et 4    |
+| `map_id`     | entier | Identifiant de la carte entre 1 et 4 |
 
 ### Réponse
 
@@ -115,11 +175,13 @@ La réponse contient l'état initial de la partie.
 }
 ```
 
-La difficulté et la carte ne sont pas répétées dans l'état dynamique, car elles sont déjà associées à l'instance de la partie.
+La difficulté et l'identifiant de la carte ne sont pas répétés dans l'état dynamique, car ils sont déjà associés à l'instance de la partie.
+
+La définition complète de la carte peut être obtenue avec `GET /maps`.
 
 ---
 
-# 4. État de la partie
+# 5. État de la partie
 
 ### `GET /game/state`
 
@@ -153,9 +215,11 @@ Retourne l'état dynamique actuel de la partie.
 
 Le premier élément de `snake` représente toujours la tête.
 
+La carte et la difficulté ne font pas partie de l'état dynamique.
+
 ---
 
-# 5. Direction
+# 6. Direction
 
 ### `POST /game/direction`
 
@@ -187,15 +251,15 @@ Par exemple :
 ```text
 Direction actuelle : RIGHT
 
-UP       → autorisée
-DOWN     → autorisée
-RIGHT    → autorisée
-LEFT     → interdite
+UP      → autorisée
+DOWN    → autorisée
+RIGHT   → autorisée
+LEFT    → interdite
 ```
 
 ---
 
-# 6. Fin de partie
+# 7. Fin de partie
 
 ### `POST /game/end`
 
@@ -215,7 +279,7 @@ Exemple :
 
 ---
 
-# 7. Tableau des scores
+# 8. Tableau des scores
 
 ### `GET /scoreboard`
 
@@ -248,7 +312,7 @@ Aucune base de données n'est nécessaire.
 
 ---
 
-# 8. Réinitialisation
+# 9. Réinitialisation
 
 ### `POST /game/reset`
 
@@ -266,7 +330,7 @@ La difficulté et la carte sélectionnées restent celles de la partie.
 
 ---
 
-# 9. États possibles
+# 10. États possibles
 
 Une partie peut avoir les états suivants :
 
@@ -290,7 +354,7 @@ Une condition de fin de partie a été détectée.
 
 ---
 
-# 10. Gestion des erreurs
+# 11. Gestion des erreurs
 
 Le backend doit permettre au frontend de distinguer une requête réussie d'une requête incorrecte.
 
@@ -313,9 +377,29 @@ Les erreurs peuvent notamment concerner :
 
 ---
 
-# 11. Principe général de communication
+# 12. Principe général de communication
 
-Le fonctionnement général est :
+Pour la sélection d'une carte :
+
+```text
+Frontend
+   ↓
+GET /maps
+   ↓
+Controller
+   ↓
+maps.py
+   ↓
+Définitions des cartes
+   ↓
+Réponse JSON
+   ↓
+Frontend
+   ↓
+Aperçu des cartes
+```
+
+Pour le lancement et le fonctionnement d'une partie :
 
 ```text
 Joueur
@@ -341,7 +425,7 @@ Le frontend ne doit pas avoir besoin de connaître la manière dont le backend s
 
 ---
 
-# 12. Évolution de l'API
+# 13. Évolution de l'API
 
 Cette documentation constitue le contrat initial entre le frontend et le backend.
 
