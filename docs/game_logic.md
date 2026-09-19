@@ -4,16 +4,23 @@
 
 La logique du jeu distingue la **configuration de la partie** de son **état dynamique**.
 
-### Configuration
+**### Configuration**
 
 La configuration est définie au lancement :
 
 * difficulté ;
-* carte.
+* carte sélectionnée.
 
-Ces valeurs sont associées à l'instance de `Game`.
+La difficulté est associée à l'instance de `Game`.
 
-Elles ne changent pas pendant une partie.
+Les définitions des cartes sont centralisées dans `maps.py`.
+
+`maps.py` contient notamment :
+
+* les dimensions communes des cartes ;
+* les obstacles de chaque carte ;
+* le comportement des bordures ;
+* l'identifiant et le nom de chaque carte.
 
 Exemple conceptuel :
 
@@ -24,7 +31,30 @@ game = Game(
 )
 ```
 
-### État dynamique
+Le `Game` utilise `map_id` pour récupérer la définition correspondante dans `maps.py`.
+
+La configuration sélectionnée ne change pas pendant une partie.
+
+**### Définition des cartes**
+
+Toutes les cartes utilisent les mêmes dimensions rectangulaires.
+
+Les cartes sont identifiées par un numéro :
+
+```text
+1 → carte 1
+2 → carte 2
+3 → carte 3
+4 → carte 4
+```
+
+Les obstacles et les règles de bordure sont définis dans `maps.py`.
+
+Le modèle utilise ces informations pour appliquer les règles de déplacement et de collision.
+
+La définition d'une carte est donc séparée de la logique générale du jeu.
+
+**### État dynamique**
 
 L'état évolue pendant la partie.
 
@@ -60,15 +90,18 @@ Il n'est pas nécessaire de maintenir une variable `length` séparée.
 Lorsqu'une nouvelle partie est créée :
 
 1. La difficulté est définie.
-2. La carte est définie.
-3. Le serpent est placé au centre de la carte.
-4. Sa longueur initiale est définie.
-5. Sa direction est `null`.
-6. Le score est initialisé à zéro.
-7. Un fruit est généré sur une position valide.
-8. Le statut de la partie est `waiting`.
+2. L'identifiant de la carte est défini.
+3. La définition de la carte correspondante est récupérée depuis `maps.py`.
+4. Le serpent est placé au centre de la carte.
+5. Sa longueur initiale est définie.
+6. Sa direction est `null`.
+7. Le score est initialisé à zéro.
+8. Un fruit est généré sur une position valide.
+9. Le statut de la partie est `waiting`.
 
 Le serpent reste immobile jusqu'à la première commande de direction.
+
+La carte sélectionnée et la difficulté restent inchangées pendant toute la partie.
 
 ---
 
@@ -132,7 +165,7 @@ La représentation exacte des coordonnées est laissée à l'implémentation.
 
 # 6. Gestion des bordures
 
-Le comportement dépend de la carte configurée lors de la création de la partie.
+Le comportement des bordures est défini dans la configuration de la carte située dans maps.py.
 
 ## Carte avec passage libre
 
@@ -168,19 +201,25 @@ Si la prochaine position se trouve en dehors de la carte :
 ```text
 collision → game_over
 ```
+Le modèle applique le comportement défini par la carte sélectionnée.
 
 ---
 
 # 7. Gestion des obstacles
 
+Les obstacles de chaque carte sont définis dans `maps.py`.
+
 Pour une carte contenant des obstacles :
 
 1. Calculer la prochaine position.
-2. Vérifier si cette position correspond à un obstacle.
+2. Vérifier si cette position correspond à un obstacle défini pour la carte.
 3. Si oui, la partie passe à `game_over`.
 4. Sinon, le déplacement peut être effectué.
 
 Les obstacles sont considérés comme des positions interdites.
+
+Une carte peut ne contenir aucun obstacle.
+
 
 ---
 
@@ -260,9 +299,9 @@ Le `Game` peut utiliser sa configuration interne pour déterminer la valeur du f
 Lorsqu'un nouveau fruit doit être généré :
 
 1. Choisir une position aléatoire.
-2. Vérifier que la position se trouve dans une zone valide de la carte.
-3. Vérifier qu'elle n'est pas occupée par le serpent.
-4. Vérifier qu'elle n'est pas occupée par un obstacle.
+2. Vérifier que la position se trouve dans les dimensions de la carte.
+3. Vérifier que la position n'est pas un obstacle défini dans `maps.py`.
+4. Vérifier qu'elle n'est pas occupée par le serpent.
 5. Si la position est invalide, en générer une nouvelle.
 6. Répéter jusqu'à obtenir une position valide.
 7. Placer le fruit sur cette position.
