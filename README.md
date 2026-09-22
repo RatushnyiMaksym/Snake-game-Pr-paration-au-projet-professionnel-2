@@ -1,1 +1,1 @@
-# Snake-game-Pr-paration-au-projet-professionnel-2
+# Snake-game-Preparation-au-projet-professionnel-2
