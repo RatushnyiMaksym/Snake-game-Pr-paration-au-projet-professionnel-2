@@ -121,37 +121,20 @@ class Snake:
 
 
 class Fruit:
-    """
-    Représente un fruit présent sur la carte.
-    """
 
     def __init__(self, position, points):
-        """
-        Crée un fruit.
-
-        Args:
-            position: Position du fruit sur la carte.
-            points: Nombre de points accordés lorsque le fruit est mangé.
-        """
+        
+        self.position = position
+        self.points = points
         pass
 
     def get_position(self):
-        """
-        Retourne la position actuelle du fruit.
-
-        Returns:
-            Position du fruit.
-        """
-        pass
+        return self.position
 
     def get_points(self):
-        """
-        Retourne la valeur du fruit.
+        
+        return self.points
 
-        Returns:
-            Nombre de points accordés lorsque le fruit est mangé.
-        """
-        pass
 
 
 class Game:
