@@ -1,6 +1,8 @@
 import pygame
-from enum import Enum
 
+from snake import Snake
+from map import Map
+from fruit import Fruit
 
 # ============================================================
 # CONFIGURATION
@@ -35,7 +37,7 @@ FRUIT_POINTS = {
 # GAME STATUS
 # ============================================================
 
-class GameStatus(Enum):
+class GameStatus:
     """
     Represents the current state of a game.
     """
@@ -43,21 +45,6 @@ class GameStatus(Enum):
     WAITING = "waiting"
     RUNNING = "running"
     GAME_OVER = "game_over"
-
-
-# ============================================================
-# DIRECTIONS
-# ============================================================
-
-class Direction(Enum):
-    """
-    Possible directions of the snake.
-    """
-
-    UP = (0, -1)
-    DOWN = (0, 1)
-    LEFT = (-1, 0)
-    RIGHT = (1, 0)
 
 
 # ============================================================
@@ -82,6 +69,9 @@ class Game:
 
     The detailed implementation of Snake, Map and Fruit is
     handled by their respective modules.
+
+    Direction is managed by the Snake module.
+    Game only sends direction requests to Snake.
     """
 
     def __init__(self, difficulty, map_id):
@@ -124,7 +114,6 @@ class Game:
         # Dynamic state
         # ----------------------------------------------------
 
-        self.direction = None
         self.score = 0
         self.status = GameStatus.WAITING
 
@@ -152,59 +141,36 @@ class Game:
     # ========================================================
 
     def initialize_game(self):
-        """
-        Initialize all objects required for a new game.
-
-        This method assumes that the Snake, Map and Fruit
-        classes will be supplied by the other modules.
-        """
 
         # ----------------------------------------------------
         # Map
         # ----------------------------------------------------
 
-        # TODO:
-        # Replace this with the actual Map implementation.
-        #
-        # Example:
-        #
-        # self.map = Map(self.map_id)
-
-        self.map = None
+        self.map = Map(self.map_id)
 
         # ----------------------------------------------------
         # Snake
         # ----------------------------------------------------
 
-        # TODO:
-        # Replace this with the actual Snake implementation.
-        #
-        # Example:
-        #
-        # start_position = self.map.get_center()
-        # self.snake = Snake(start_position)
+        start_x, start_y = self.map.get_center()
 
-        self.snake = None
+        self.snake = Snake(
+            start_x,
+            start_y
+        )
 
         # ----------------------------------------------------
         # Fruit
         # ----------------------------------------------------
 
-        # TODO:
-        # Replace this with the actual Fruit implementation.
-        #
-        # Example:
-        #
-        # self.fruit = Fruit()
-        # self.spawn_fruit()
+        self.fruit = Fruit()
 
-        self.fruit = None
+        self.spawn_fruit()
 
         # ----------------------------------------------------
         # Game state
         # ----------------------------------------------------
 
-        self.direction = None
         self.score = 0
         self.status = GameStatus.WAITING
         self.move_timer = 0
@@ -217,8 +183,8 @@ class Game:
         """
         Process one Pygame event.
 
-        The Game receives Pygame input and converts it into
-        game-level actions.
+        The Game receives Pygame input and sends direction
+        requests to the Snake module.
         """
 
         if event.type == pygame.QUIT:
@@ -231,16 +197,16 @@ class Game:
             # ----------------------------------------------
 
             if event.key == pygame.K_UP:
-                self.change_direction(Direction.UP)
+                self.change_direction((0, -1))
 
             elif event.key == pygame.K_DOWN:
-                self.change_direction(Direction.DOWN)
+                self.change_direction((0, 1))
 
             elif event.key == pygame.K_LEFT:
-                self.change_direction(Direction.LEFT)
+                self.change_direction((-1, 0))
 
             elif event.key == pygame.K_RIGHT:
-                self.change_direction(Direction.RIGHT)
+                self.change_direction((1, 0))
 
             # ----------------------------------------------
             # Restart after game over
@@ -270,41 +236,33 @@ class Game:
 
     def change_direction(self, new_direction):
         """
-        Try to change the direction of the snake.
+        Ask the Snake to change direction.
 
-        A direction change is rejected if it would cause
-        an immediate 180-degree turn.
+        Direction is managed internally by Snake.
 
-        The first valid direction also changes the state
-        from WAITING to RUNNING.
+        Valid directions are represented by tuples:
+
+            UP    = (0, -1)
+            DOWN  = (0, 1)
+            LEFT  = (-1, 0)
+            RIGHT = (1, 0)
+
+        Snake is responsible for rejecting invalid directions
+        and immediate 180-degree turns.
+
+        The first accepted direction changes the game from
+        WAITING to RUNNING.
         """
 
-        # No direction has been selected yet.
-        if self.direction is None:
-
-            self.direction = new_direction
-
-            if self.status == GameStatus.WAITING:
-                self.status = GameStatus.RUNNING
-
-            return True
-
-        # ----------------------------------------------------
-        # Prevent immediate 180-degree turns
-        # ----------------------------------------------------
-
-        current_dx, current_dy = self.direction.value
-        new_dx, new_dy = new_direction.value
-
-        if (
-            current_dx + new_dx == 0
-            and current_dy + new_dy == 0
-        ):
+        if self.snake is None:
             return False
 
-        self.direction = new_direction
+        changed = self.snake.change_direction(new_direction)
 
-        return True
+        if changed and self.status == GameStatus.WAITING:
+            self.status = GameStatus.RUNNING
+
+        return changed
 
     # ========================================================
     # UPDATE
@@ -344,28 +302,35 @@ class Game:
 
         The order is:
 
-            1. Calculate next position
-            2. Apply map rules
-            3. Check collisions
-            4. Move snake
-            5. Check fruit
-            6. Update score / growth
-            7. Generate new fruit
+            1. Get current direction from Snake
+            2. Calculate next position
+            3. Apply map rules
+            4. Check collisions
+            5. Check whether fruit is eaten
+            6. Move snake
+            7. Update score / growth
+            8. Generate new fruit
         """
 
         if self.snake is None:
             return
 
-        if self.direction is None:
+        # ----------------------------------------------------
+        # 1. Get current direction from Snake
+        # ----------------------------------------------------
+
+        direction = self.snake.get_direction()
+
+        if direction is None:
             return
 
+        dx, dy = direction
+
         # ----------------------------------------------------
-        # 1. Current head
+        # 2. Current head
         # ----------------------------------------------------
 
         current_head = self.snake.get_head()
-
-        dx, dy = self.direction.value
 
         next_position = (
             current_head[0] + dx,
@@ -373,7 +338,7 @@ class Game:
         )
 
         # ----------------------------------------------------
-        # 2. Apply map rules
+        # 3. Apply map rules
         # ----------------------------------------------------
 
         next_position = self.apply_map_rules(next_position)
@@ -385,7 +350,7 @@ class Game:
             return
 
         # ----------------------------------------------------
-        # 3. Collision detection
+        # 4. Collision detection
         # ----------------------------------------------------
 
         if self.check_collision(next_position):
@@ -393,24 +358,31 @@ class Game:
             return
 
         # ----------------------------------------------------
-        # 4. Check whether fruit is eaten
+        # 5. Check whether fruit is eaten
         # ----------------------------------------------------
 
         eating_fruit = self.is_fruit_at(next_position)
 
         # ----------------------------------------------------
-        # 5. Move snake
+        # 6. Move snake
         # ----------------------------------------------------
 
-        self.snake.move(next_position, grow=eating_fruit)
+        self.snake.move(
+            next_position,
+            grow=eating_fruit
+        )
 
         # ----------------------------------------------------
-        # 6. Fruit
+        # 7. Fruit
         # ----------------------------------------------------
 
         if eating_fruit:
 
             self.score += self.fruit_points
+
+            # ------------------------------------------------
+            # 8. Generate new fruit
+            # ------------------------------------------------
 
             self.spawn_fruit()
 
@@ -427,12 +399,8 @@ class Game:
 
         For a bordered map, leaving the map returns None.
 
-        For maps with obstacles, obstacles are handled as
-        collisions.
+        Positions containing obstacles return None.
         """
-
-        # TODO:
-        # Replace this section with the actual Map API.
 
         if self.map is None:
             return position
@@ -480,7 +448,14 @@ class Game:
             - Map obstacles
 
         The map boundary is handled by apply_map_rules().
+
+        The current tail is excluded from the collision check
+        when the snake is not eating, because that tail segment
+        will disappear during the movement.
         """
+
+        if self.snake is None:
+            return False
 
         # ----------------------------------------------------
         # Map collision
@@ -497,8 +472,7 @@ class Game:
 
         body = self.snake.get_body()
 
-        # The tail is normally going to disappear during
-        # this movement.
+        # The tail normally disappears during this movement.
         #
         # Therefore, moving onto the current tail is allowed
         # when the snake is not eating a fruit.
@@ -549,12 +523,14 @@ class Game:
         if self.map is None:
             return
 
+        if self.snake is None:
+            return
+
         snake_body = self.snake.get_body()
 
         # Ask the Fruit module to find a valid position.
         #
-        # The exact implementation can be changed once the
-        # Fruit branch is integrated.
+        # The exact implementation depends on the Fruit API.
 
         self.fruit.spawn(
             map=self.map,
@@ -576,6 +552,7 @@ class Game:
         self.status = GameStatus.GAME_OVER
 
         # The score is intentionally not deleted.
+        #
         # The scoreboard module can retrieve it using
         # get_score().
 
@@ -612,10 +589,15 @@ class Game:
 
     def get_direction(self):
         """
-        Return the current direction.
+        Return the current direction of the Snake.
+
+        The direction is owned by the Snake module.
         """
 
-        return self.direction
+        if self.snake is None:
+            return None
+
+        return self.snake.get_direction()
 
     def is_running(self):
         """
@@ -667,8 +649,8 @@ class Game:
         Run the Pygame loop for this game.
 
         Returns:
-            "quit"  -> application should close
-            "menu"  -> return to main menu
+            "quit" -> application should close
+            "menu" -> return to main menu
         """
 
         running = True
