@@ -27,24 +27,35 @@ class Map:
             self.obstacles = set()
 
         elif map_id == 3:
-            # Carte 3 : Avec des obstacles internes fixes
+            # Carte 3 : 25x25 fermée avec obstacles loin du centre (12, 12)
             self.width = 25
             self.height = 25
             self.wraps = False
-            # Exemple d'obstacles (coordonnées en cases)
             self.obstacles = {
-                (10, 10), (10, 11), (10, 12),
-                (15, 5), (15, 6), (15, 7)
+                # Bloc supérieur gauche
+                (4, 4), (5, 4), (6, 4),
+                (4, 5), (4, 6),
+                # Bloc supérieur droit
+                (18, 4), (19, 4), (20, 4),
+                (20, 5), (20, 6),
+                # Bloc inférieur gauche
+                (4, 18), (4, 19), (4, 20),
+                (5, 20), (6, 20),
+                # Bloc inférieur droit
+                (20, 18), (20, 19), (20, 20),
+                (18, 20), (19, 20),
             }
 
         elif map_id == 4:
-            # Carte 4 : Plus grande avec murs et passage traversant
-            self.width = 30
-            self.height = 20
+            # Carte 4 : 24x24 traversante avec piliers espacés
+            self.width = 24
+            self.height = 24
             self.wraps = True
             self.obstacles = {
-                (5, 5), (5, 6), (5, 7),
-                (24, 12), (24, 13), (24, 14)
+                (6, 6), (7, 6), (6, 7),
+                (16, 6), (17, 6), (17, 7),
+                (6, 16), (6, 17), (7, 17),
+                (16, 17), (17, 16), (17, 17),
             }
         else:
             raise ValueError("Map ID invalide (doit être entre 1 et 4).")
@@ -59,6 +70,10 @@ class Map:
         """Retourne la hauteur de la carte en nombre de cases."""
         return self.height
 
+    def get_cell_size(self):
+        """Retourne la taille d'une case en pixels."""
+        return self.cell_size
+        
     def wraps_edges(self):
         """Retourne True si le serpent traverse les bords, False sinon."""
         return self.wraps
