@@ -1,5 +1,3 @@
-
-
 from ui.panelFactory import PanelFactory
 
 import pygame
@@ -9,7 +7,7 @@ class Windows:
 
     def __init__(self):
         self.windowSize = (1000, 900)
-        self.manager = pygame_gui.UIManager(self.windowSize, "static/Theme.json")
+        self.manager = pygame_gui.UIManager(self.windowSize, "main/static/Theme.json")
         self.bgColor = (148, 193, 209)
         self.grassHeight = 110
         self.screen = pygame.display.set_mode(self.windowSize, pygame.RESIZABLE)
@@ -25,7 +23,8 @@ class Windows:
             anchors={"left": "left", "right": "right", "bottom": "bottom"},
         )
         APPLE_SIZE = 52
-        apple_surface = pygame.image.load_sized_svg("static/images/svg/apple.svg", (APPLE_SIZE, APPLE_SIZE))
+        
+        apple_surface = pygame.image.load_sized_svg("main/static/images/svg/apple.svg", (APPLE_SIZE, APPLE_SIZE))
         self.apple = pygame_gui.elements.UIImage(
             relative_rect=pygame.Rect(-APPLE_SIZE - 60, -self.grassHeight - APPLE_SIZE + 3, APPLE_SIZE, APPLE_SIZE),
             image_surface=apple_surface,

@@ -20,7 +20,7 @@
     "font": {
       "name": "itim",
       "size": "28",
-      "regular_path": "static/fonts/Itim/Itim-Regular.ttf"
+      "regular_path": "main/static/fonts/Itim/Itim-Regular.ttf"
     }
   },
   "button": {
@@ -32,7 +32,7 @@
     "font": {
       "name": "itim",
       "size": "18",
-      "regular_path": "static/fonts/Itim/Itim-Regular.ttf"
+      "regular_path": "main/static/fonts/Itim/Itim-Regular.ttf"
     }
   },
   "label": {
@@ -42,7 +42,7 @@
     "font": {
       "name": "itim",
       "size": "28",
-      "regular_path": "static/fonts/Itim/Itim-Regular.ttf"
+      "regular_path": "main/static/fonts/Itim/Itim-Regular.ttf"
     }
   },
   "text_entry_line": {
@@ -54,7 +54,7 @@
     "font": {
       "name": "itim",
       "size": "28",
-      "regular_path": "static/fonts/Itim/Itim-Regular.ttf"
+      "regular_path": "main/static/fonts/Itim/Itim-Regular.ttf"
     }
   },
   "window": {
@@ -69,7 +69,7 @@
     "font": {
       "name": "itim",
       "size": "72",
-      "regular_path": "static/fonts/Itim/Itim-Regular.ttf"
+      "regular_path": "main/static/fonts/Itim/Itim-Regular.ttf"
     }
   },
   "#grass": {
@@ -87,7 +87,7 @@
     "font": {
       "name": "itim",
       "size": "50",
-      "regular_path": "static/fonts/Itim/Itim-Regular.ttf"
+      "regular_path": "main/static/fonts/Itim/Itim-Regular.ttf"
     },
     "misc": {
       "text_horiz_alignment": "center",
